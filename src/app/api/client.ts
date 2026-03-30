@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000/api';
+const BASE_URL = 'https://nv89-5kzc-7g7w.gw-1a.dockhost.net/api';
 
 let authToken: string | null = localStorage.getItem('authToken');
 
