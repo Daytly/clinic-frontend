@@ -52,10 +52,12 @@ export const apiClient = {
   ): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
 
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
+    const headers: HeadersInit = {...options.headers};
+
+    // Не ставим Content-Type для FormData — браузер сам добавит с boundary
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (authToken) {
       headers['Authorization'] = `Token ${authToken}`;

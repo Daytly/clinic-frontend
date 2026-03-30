@@ -19,9 +19,6 @@ export const teamApi = {
     return apiClient.request<JoinTeamResponse>('/join-team/', {
       method: 'POST',
       body: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
     });
   },
 };
