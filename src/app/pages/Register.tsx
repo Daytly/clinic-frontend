@@ -53,8 +53,10 @@ export function Register() {
 
     try {
       await register(registerName, registerPhone, registerEmail, registerPassword);
-      toast.success('Регистрация прошла успешно');
-      navigate('/profile');
+      navigate('/login');
+      toast.success('Регистрация прошла успешно', {
+        description: 'Войдите в свой аккаунт',
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ошибка регистрации');
     }

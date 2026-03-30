@@ -83,8 +83,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const register = async (name: string, phone: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const newUser = await auth.register({ name, phone, email, password });
-      setUser(newUser);
+      await auth.register({ name, phone, email, password });
     } finally {
       setIsLoading(false);
     }

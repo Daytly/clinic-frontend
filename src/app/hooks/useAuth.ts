@@ -1,11 +1,11 @@
 import {useState} from 'react';
-import {authApi, type LoginCredentials, type RegisterData, type User} from '../api/auth.ts';
+import {authApi, type LoginCredentials, type LoginResponse, type RegisterData, type User} from '../api/auth.ts';
 
 interface UseAuthResult {
   isLoading: boolean;
   error: string | null;
   login: (credentials: LoginCredentials) => Promise<User>;
-  register: (data: RegisterData) => Promise<User>;
+  register: (data: RegisterData) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   getCurrentUser: () => Promise<User | null>;
 }
@@ -34,17 +34,12 @@ export function useAuth(): UseAuthResult {
     }
   };
 
-  const register = async (data: RegisterData): Promise<User> => {
+  const register = async (data: RegisterData): Promise<LoginResponse> => {
     setIsLoading(true);
     setError(null);
     try {
-      await authApi.register(data);
-      const response = await authApi.getCurrentUser();
-      if (response) {
-        return response;
-      } else {
-        throw new Error('Ошибка входа');
-      }
+      const response = await authApi.register(data);
+      return response;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Ошибка регистрации';
       setError(errorMessage);
