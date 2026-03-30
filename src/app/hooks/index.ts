@@ -1,4 +1,4 @@
-export { useAuth } from './useAuth';
-export { useProfile } from './useProfile';
-export { useBookings } from './useBookings';
-export { useTeam } from './useTeam';
+export { useAuth } from './useAuth.ts';
+export { useProfile } from './useProfile.ts';
+export { useBookings } from './useBookings.ts';
+export { useTeam } from './useTeam.ts';

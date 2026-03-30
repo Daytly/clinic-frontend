@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { teamApi, type JoinTeamData, type JoinTeamResponse } from '../api/team';
+import { teamApi, type JoinTeamData, type JoinTeamResponse } from '../api/team.ts';
 
 interface UseTeamResult {
   isLoading: boolean;

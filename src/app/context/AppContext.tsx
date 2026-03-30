@@ -1,32 +1,30 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { User } from '../api/auth';
-import type { Session } from '../api/booking';
-import { useAuth } from '../hooks/useAuth';
-import { useProfile } from '../hooks/useProfile';
-import { useBookings } from '../hooks/useBookings';
+import {createContext, type ReactNode, useContext, useEffect, useState} from 'react';
+import type {User} from '../api/auth.ts';
+import type {Specialist} from '../api/specialists.ts';
+import {specialistsApi} from '../api/specialists.ts';
+import {useAuth} from '../hooks/useAuth.ts';
+import {useProfile} from '../hooks/useProfile.ts';
 
 interface AppContextType {
   // User state
   user: User | null;
   isAuthenticated: boolean;
   isStaff: boolean;
-  
+
   // Auth actions
-  login: (phone: string, password: string) => Promise<void>;
-  loginStaff: (email: string, password: string) => Promise<void>;
+  login: (phone: string, password: string) => Promise<User>;
   register: (name: string, phone: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  
+
   // Profile actions
   updateUser: (updates: Partial<User>) => Promise<void>;
   updatePassword: (email: string, currentPassword: string, newPassword: string) => Promise<void>;
-  
-  // Sessions state and actions
-  sessions: Session[];
-  addSession: (session: Omit<Session, 'id' | 'status'>) => Promise<void>;
-  getStaffAppointments: (specialistId: string) => Session[];
-  refreshSessions: () => Promise<void>;
-  
+
+  // Specialists
+  specialists: Specialist[];
+  specialistsLoading: boolean;
+  specialistsError: string | null;
+
   // Loading states
   isLoading: boolean;
 }
@@ -35,24 +33,20 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [specialists, setSpecialists] = useState<Specialist[]>([]);
+  const [specialistsLoading, setSpecialistsLoading] = useState(true);
+  const [specialistsError, setSpecialistsError] = useState<string | null>(null);
 
   const auth = useAuth();
   const profile = useProfile();
-  const bookings = useBookings();
 
-  // Initialize user from storage on mount
+  // Initialize user and specialists on mount
   useEffect(() => {
     const initUser = async () => {
       try {
         const currentUser = await auth.getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-          // Load sessions if user is authenticated
-          const userSessions = await bookings.getUserSessions();
-          setSessions(userSessions);
-        }
+        if (currentUser) setUser(currentUser);
       } catch (error) {
         console.error('Error initializing user:', error);
       } finally {
@@ -60,34 +54,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    const initSpecialists = async () => {
+      try {
+        const data = await specialistsApi.getAll();
+        setSpecialists(data);
+      } catch (err) {
+        setSpecialistsError(err instanceof Error ? err.message : 'Ошибка загрузки специалистов');
+      } finally {
+        setSpecialistsLoading(false);
+      }
+    };
+
     initUser();
+    initSpecialists();
   }, []);
 
-  const login = async (phone: string, password: string) => {
+  const login = async (phone: string, password: string): Promise<User> => {
     setIsLoading(true);
     try {
-      const loggedInUser = await auth.login({ phone, password });
+      const loggedInUser = await auth.login({phone: phone, password});
       setUser(loggedInUser);
-      
-      // Load user sessions after login
-      const userSessions = await bookings.getUserSessions();
-      setSessions(userSessions);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginStaff = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const loggedInUser = await auth.loginStaff({ email, password });
-      setUser(loggedInUser);
-      
-      // Load staff sessions after login
-      if (loggedInUser.specialistId) {
-        const staffSessions = await bookings.getSpecialistSessions(loggedInUser.specialistId);
-        setSessions(staffSessions);
-      }
+      return loggedInUser;
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +85,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const newUser = await auth.register({ name, phone, email, password });
       setUser(newUser);
-      setSessions([]); // New user has no sessions
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +95,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       await auth.logout();
       setUser(null);
-      setSessions([]);
     } finally {
       setIsLoading(false);
     }
@@ -143,53 +128,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addSession = async (sessionData: Omit<Session, 'id' | 'status'>) => {
-    setIsLoading(true);
-    try {
-      const newSession = await bookings.createBooking(sessionData);
-      setSessions(prev => [...prev, newSession]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const refreshSessions = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    try {
-      if (user.role === 'staff' && user.specialistId) {
-        const staffSessions = await bookings.getSpecialistSessions(user.specialistId);
-        setSessions(staffSessions);
-      } else {
-        const userSessions = await bookings.getUserSessions();
-        setSessions(userSessions);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getStaffAppointments = (specialistId: string): Session[] => {
-    return sessions.filter(session => session.specialistId === specialistId);
-  };
-
   return (
     <AppContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
-        isStaff: user?.role === 'staff',
+        isStaff: user?.is_specialist || false,
         login,
-        loginStaff,
         register,
         logout,
         updateUser,
         updatePassword,
-        sessions,
-        addSession,
-        getStaffAppointments,
-        refreshSessions,
+        specialists,
+        specialistsLoading,
+        specialistsError,
         isLoading,
       }}
     >

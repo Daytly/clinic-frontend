@@ -1,14 +1,13 @@
-import { createBrowserRouter } from "react-router";
-import { Layout } from "./components/Layout";
-import { Home } from "./pages/Home";
-import { Login } from "./pages/Login";
-import { Register } from "./pages/Register";
-import { StaffAuth } from "./pages/StaffAuth";
-import { Specialists } from "./pages/Specialists";
-import { SpecialistProfile } from "./pages/SpecialistProfile";
-import { Profile } from "./pages/Profile";
-import { StaffProfile } from "./pages/StaffProfile";
-import { JoinTeam } from "./pages/JoinTeam";
+import {createBrowserRouter} from "react-router";
+import {Layout} from "./components/Layout.tsx";
+import {Home} from "./pages/Home.tsx";
+import {Login} from "./pages/Login.tsx";
+import {Register} from "./pages/Register.tsx";
+import {Specialists} from "./pages/Specialists.tsx";
+import {SpecialistProfile} from "./pages/SpecialistProfile.tsx";
+import {Profile} from "./pages/Profile.tsx";
+import {StaffProfile} from "./pages/StaffProfile.tsx";
+import {JoinTeam} from "./pages/JoinTeam.tsx";
 
 export const router = createBrowserRouter([
   {
@@ -18,7 +17,6 @@ export const router = createBrowserRouter([
       { index: true, Component: Home },
       { path: "login", Component: Login },
       { path: "register", Component: Register },
-      { path: "staff-auth", Component: StaffAuth },
       { path: "specialists", Component: Specialists },
       { path: "specialist/:id", Component: SpecialistProfile },
       { path: "profile", Component: Profile },

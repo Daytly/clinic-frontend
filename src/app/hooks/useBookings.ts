@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { bookingApi, type Session, type BookingData } from '../api/booking';
+import { bookingApi, type Session, type BookingData } from '../api/booking.ts';
 
 interface UseBookingsResult {
   isLoading: boolean;

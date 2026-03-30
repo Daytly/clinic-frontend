@@ -1,12 +1,17 @@
-import { apiClient } from './client';
+import {apiClient} from './client.ts';
 
 export interface User {
-  id: string;
-  name: string;
-  phone: string;
+  id: number;
+  initials: string;
+  phone_number: string;
   email: string;
-  role: 'client' | 'staff';
-  specialistId?: string;
+  is_specialist: boolean;
+  education?: string;
+  practice?: string;
+  link?: string;
+  work_email?: string;
+  work_methods?: string | string[];
+  description?: string;
 }
 
 export interface LoginCredentials {
@@ -27,167 +32,64 @@ export interface RegisterData {
 }
 
 export interface LoginResponse {
-  user: User;
-  token: string;
+  auth_token: string;
 }
-
-// Mock database
-const mockUsers: Record<string, User & { password: string }> = {
-  client: {
-    id: '1',
-    name: 'Иванова Мария Петровна',
-    phone: '+7 (999) 123-45-67',
-    email: 'maria.ivanova@example.com',
-    password: '123456',
-    role: 'client',
-  },
-  staff: {
-    id: '2',
-    name: 'Анна Петрова',
-    phone: '+7 (999) 100-00-01',
-    email: 'anna.petrova@clinic.com',
-    password: '123456',
-    role: 'staff',
-    specialistId: '1',
-  },
-};
-
-let registeredUsers: Record<string, User & { password: string }> = { ...mockUsers };
-
-// Generate mock JWT token
-const generateToken = (userId: string, role: string): string => {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = btoa(
-    JSON.stringify({
-      userId,
-      role,
-      exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-    })
-  );
-  const signature = btoa(`mock-signature-${userId}-${role}`);
-  return `${header}.${payload}.${signature}`;
-};
 
 export const authApi = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Find user by phone
-    const user = Object.values(registeredUsers).find(
-      u => u.phone === credentials.phone && u.role === 'client'
-    );
-
-    if (!user || user.password !== credentials.password) {
-      throw new Error('Неверный телефон или пароль');
-    }
-
-    const token = generateToken(user.id, user.role);
-    apiClient.setAuthToken(token);
-
-    const { password, ...userWithoutPassword } = user;
-    localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-
-    return {
-      user: userWithoutPassword,
-      token,
-    };
+    const response = await apiClient.post<LoginResponse>('/auth/token/login/', {
+      phone_number: credentials.phone,
+      password: credentials.password,
+    });
+    apiClient.setAuthToken(response.auth_token);
+    return response;
   },
 
   async loginStaff(credentials: StaffLoginCredentials): Promise<LoginResponse> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Find staff by email
-    const user = Object.values(registeredUsers).find(
-      u => u.email === credentials.email && u.role === 'staff'
-    );
-
-    if (!user || user.password !== credentials.password) {
-      throw new Error('Неверный email или пароль');
-    }
-
-    const token = generateToken(user.id, user.role);
-    apiClient.setAuthToken(token);
-
-    const { password, ...userWithoutPassword } = user;
-    localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-
-    return {
-      user: userWithoutPassword,
-      token,
-    };
+    // 🔁 Замените '/auth/login/staff/' на ваш реальный эндпоинт
+    const response = await apiClient.post<LoginResponse>('/auth/token/login/', credentials);
+    apiClient.setAuthToken(response.auth_token);
+    return response;
   },
 
   async register(data: RegisterData): Promise<LoginResponse> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // 🔁 Замените '/auth/register/' на ваш реальный эндпоинт
+    const response = await apiClient.post<LoginResponse>('/auth/users/', {
 
-    // Check if user already exists
-    const existingUser = Object.values(registeredUsers).find(
-      u => u.phone === data.phone || u.email === data.email
-    );
-
-    if (existingUser) {
-      throw new Error('Пользователь с таким телефоном или email уже существует');
-    }
-
-    // Create new user
-    const newUser = {
-      id: `user-${Date.now()}`,
-      name: data.name,
-      phone: data.phone,
+      initials: data.name,
+      phone_number: data.phone,
       email: data.email,
       password: data.password,
-      role: 'client' as const,
-    };
 
-    registeredUsers[newUser.id] = newUser;
-
-    const token = generateToken(newUser.id, newUser.role);
-    apiClient.setAuthToken(token);
-
-    const { password, ...userWithoutPassword } = newUser;
-    localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-
-    return {
-      user: userWithoutPassword,
-      token,
-    };
+    });
+    apiClient.setAuthToken(response.auth_token);
+    return response;
   },
 
   async logout(): Promise<void> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-
+    // 🔁 Опционально: если бэкенд требует запрос на логаут
+    try {
+      await apiClient.post('/auth/token/logout/', {});
+    } catch {
+      // Игнорируем ошибки при логауте — всё равно чистим локально
+    }
     apiClient.clearAuthToken();
   },
 
   async getCurrentUser(): Promise<User | null> {
-    const token = apiClient.getAuthToken();
-    if (!token) return null;
-
-    // Try to get from localStorage
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      return JSON.parse(storedUser);
+    try {
+      // 🔁 Замените '/auth/me/' на ваш эндпоинт получения профиля
+      const user = await apiClient.get<User>('/auth/users/me/');
+      return user;
+    } catch {
+      return null;
     }
-
-    return null;
   },
 
   async refreshToken(): Promise<string> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const user = await this.getCurrentUser();
-    if (!user) {
-      throw new Error('Unauthorized');
-    }
-
-    const newToken = generateToken(user.id, user.role);
-    apiClient.setAuthToken(newToken);
-
-    return newToken;
+    // 🔁 Замените '/auth/token/refresh/' на ваш эндпоинт
+    const response = await apiClient.post<{ token: string }>('/auth/token/refresh/', {});
+    apiClient.setAuthToken(response.token);
+    return response.token;
   },
 };

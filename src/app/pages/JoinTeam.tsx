@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Upload, X } from 'lucide-react';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { useTeam } from '../hooks/useTeam';
+import { Button } from '../components/Button.tsx';
+import { Input } from '../components/Input.tsx';
+import { useTeam } from '../hooks/useTeam.ts';
 import { toast } from 'sonner';
 
 export function JoinTeam() {
@@ -50,7 +50,7 @@ export function JoinTeam() {
 
     try {
       const response = await submitApplication({ email, resume: file });
-      toast.success(response.message, {
+      toast.success("Заявка отправлена", {
         duration: 5000
       });
 

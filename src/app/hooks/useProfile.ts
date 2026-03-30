@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { userApi, type UpdateUserData, type UpdatePasswordData } from '../api/user';
-import type { User } from '../api/auth';
+import { userApi, type UpdateUserData, type UpdatePasswordData } from '../api/user.ts';
+import type { User } from '../api/auth.ts';
 
 interface UseProfileResult {
   isLoading: boolean;

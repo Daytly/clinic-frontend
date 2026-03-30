@@ -1,8 +1,7 @@
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
-import { useApp } from '../context/AppContext';
+import {Link, Outlet, useNavigate} from 'react-router';
+import {useApp} from '../context/AppContext.tsx';
 
 export function Layout() {
-  const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, isStaff, logout } = useApp();
   

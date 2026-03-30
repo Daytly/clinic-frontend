@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { Eye, EyeOff } from 'lucide-react';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { useApp } from '../context/AppContext';
+import { Button } from '../components/Button.tsx';
+import { Input } from '../components/Input.tsx';
+import { useApp } from '../context/AppContext.tsx';
 import { toast } from 'sonner';
 
 export function Login() {
@@ -26,9 +26,9 @@ export function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(loginPhone, loginPassword);
+      const user = await login(loginPhone, loginPassword);
       toast.success('Вход выполнен успешно');
-      navigate('/profile');
+      navigate(user.is_specialist ? '/staff-profile' : '/profile');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Ошибка входа');
     }

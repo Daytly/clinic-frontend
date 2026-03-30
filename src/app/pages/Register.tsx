@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { Eye, EyeOff } from 'lucide-react';
-import { Button } from '../components/Button';
-import { Input } from '../components/Input';
-import { useApp } from '../context/AppContext';
+import { Button } from '../components/Button.tsx';
+import { Input } from '../components/Input.tsx';
+import { useApp } from '../context/AppContext.tsx';
 import { toast } from 'sonner';
 
 export function Register() {
