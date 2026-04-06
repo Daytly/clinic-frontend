@@ -34,9 +34,10 @@ export class ApiError extends Error {
 }
 
 function isPublicEndpoint(endpoint: string): boolean {
-  return PUBLIC_ENDPOINTS.some(path => endpoint.startsWith(path) || endpoint.includes(path));
-}
+  const cleanEndpoint = endpoint.split('?')[0];
 
+  return PUBLIC_ENDPOINTS.some(path => cleanEndpoint === path);
+}
 export const apiClient = {
   setAuthToken(token: string) {
     authToken = token;
@@ -64,12 +65,10 @@ export const apiClient = {
     const url = `${BASE_URL}${endpoint}`;
     const headers: HeadersInit = { ...options.headers };
 
-    // Не ставим Content-Type для FormData
     if (!(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
 
-    // ← ГЛАВНОЕ ИЗМЕНЕНИЕ: не добавляем токен к публичным эндпоинтам
     if (authToken && !isPublicEndpoint(endpoint)) {
       headers['Authorization'] = `Token ${authToken}`;
     }
@@ -91,11 +90,15 @@ export const apiClient = {
       }
 
       if (!response.ok) {
-        throw new ApiError(
+        const apiError = new ApiError(
             data?.message || data?.detail || 'Ошибка запроса',
             response.status,
-            data?.errors
+            data
         );
+
+        (apiError as any).rawData = data;
+
+        throw apiError;
       }
 
       return data as T;

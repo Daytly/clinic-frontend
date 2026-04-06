@@ -173,7 +173,7 @@ export function Profile() {
                   type="password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  placeholder="Минимум 6 символов"
+                  placeholder="Минимум 8 символов"
                 />
                 <Input
                   label="Подтверждение пароля"
