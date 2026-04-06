@@ -2,6 +2,13 @@ const BASE_URL = 'https://nv89-5kzc-7g7w.gw-1a.dockhost.net/api';
 
 let authToken: string | null = localStorage.getItem('authToken');
 
+const PUBLIC_ENDPOINTS = [
+  '/auth/token/login/',
+  '/auth/users/',
+  '/auth/token/refresh/',
+  '/auth/users/activation/',
+];
+
 export interface ApiResponse<T> {
   data: T;
   status: number;
@@ -24,6 +31,10 @@ export class ApiError extends Error {
     this.status = status;
     this.errors = errors;
   }
+}
+
+function isPublicEndpoint(endpoint: string): boolean {
+  return PUBLIC_ENDPOINTS.some(path => endpoint.startsWith(path) || endpoint.includes(path));
 }
 
 export const apiClient = {
@@ -51,15 +62,15 @@ export const apiClient = {
       options: RequestInit = {}
   ): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
+    const headers: HeadersInit = { ...options.headers };
 
-    const headers: HeadersInit = {...options.headers};
-
-    // Не ставим Content-Type для FormData — браузер сам добавит с boundary
+    // Не ставим Content-Type для FormData
     if (!(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
 
-    if (authToken) {
+    // ← ГЛАВНОЕ ИЗМЕНЕНИЕ: не добавляем токен к публичным эндпоинтам
+    if (authToken && !isPublicEndpoint(endpoint)) {
       headers['Authorization'] = `Token ${authToken}`;
     }
 
@@ -67,7 +78,7 @@ export const apiClient = {
       const response = await fetch(url, {
         ...options,
         headers,
-        credentials: 'include', // если нужна отправка cookies
+        credentials: 'include',
       });
 
       const contentType = response.headers.get('content-type');
@@ -92,7 +103,7 @@ export const apiClient = {
       if (error instanceof ApiError) throw error;
 
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new ApiError('Не удалось подключиться к серверу. Проверьте, запущен ли бэкенд на localhost:8000', 0);
+        throw new ApiError('Не удалось подключиться к серверу. Проверьте соединение', 0);
       }
 
       throw new ApiError(
