@@ -1,6 +1,7 @@
 import { apiClient } from './client.ts';
 
 export interface Specialist {
+  id: number;
   initials: string;
   education: string;
   practice: string;
